@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prince Hardware</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 0; background-color: #f4f4f4; }
+        
+        /* Black Top Bar */
+        .navbar {
+            background-color: #000;
+            color: #fff;
+            padding: 15px 40px;
+            text-align: left;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* 3-Column Grid */
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 images per row */
+            gap: 30px;
+            padding: 0 20px;
+        }
+
+        /* Image Frame Card */
+        .product-card {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .img-frame {
+            width: 100%;
+            height: 200px;
+            background-color: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid #ccc;
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .product-name {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        PRINCE HARDWARE
+    </div>
+
+    <div class="container">
+        {% for p in products %}
+        <div class="product-card">
+            <div class="img-frame">
+                <img src="/display?image={{ p.image }}" alt="{{ p.name }}">
+            </div>
+            <p class="product-name">{{ p.name }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
